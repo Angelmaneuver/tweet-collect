@@ -1,0 +1,115 @@
+import { QuickPickItem }             from 'vscode';
+import { InputStep, MultiStepInput } from '../../utils/multiStepInput';
+import { AbstractBaseGuide, State }  from './base';
+import * as Constant                 from '../../constant';
+import { Optional }                  from '../../utils/base/optional';
+
+export abstract class AbstractQuickPickGuide extends AbstractBaseGuide {
+	protected placeholder                                                         = '';
+	protected items                                                               = Array<QuickPickItem>();
+	protected activeItem:    QuickPickItem | readonly QuickPickItem[] | undefined = undefined;
+	protected canSelectMany: boolean                                              = false;
+
+	public init(): void {
+		this.initialFields.push('placeholder', 'items', 'activeItem', 'canSelectMany');
+		this.items = [];
+
+		super.init();
+	}
+
+	public async show(input: MultiStepInput):Promise<void | InputStep> {
+		this.nextStep   = this.totalSteps === 0 ? undefined : this.nextStep;
+		this.activeItem = await input.showQuickPick(
+			{
+				title:         this.title,
+				step:          this.step,
+				totalSteps:    this.totalSteps,
+				placeholder:   this.placeholder,
+				items:         this.items,
+				activeItem:    this.inputPick,
+				validate:      this.validate,
+				shouldResume:  this.shouldResume,
+				canSelectMany: this.canSelectMany,
+			}
+		);
+
+		if (this.itemId.length > 0) {
+			if (this.canSelectMany) {
+				this.guideGroupResultSet[this.itemId] = this.activeItem;
+			} else {
+				this.guideGroupResultSet[this.itemId] = (this.activeItem as QuickPickItem).label;
+			}
+		}
+	}
+
+	protected get state(): State {
+		return this._state as State;
+	}
+
+	protected get inputPick(): QuickPickItem | readonly QuickPickItem[] | undefined {
+		let value = this.inputValue;
+
+		if (typeof(value) === 'string') {
+			value = value.replace(Constant.LABEL_STRING_MATCH, '');
+			return this.items.find((item) => { return item.label.replace(Constant.LABEL_STRING_MATCH, '') === value; });
+		} else {
+			return this.activeItem;
+		}
+	}
+
+	protected getItemByLabel(items: Array<QuickPickItem>, label: string): QuickPickItem | undefined {
+		return items.find((item) => { return item.label === label; });
+	}
+
+	protected get getLabelStringByItem(): string {
+		const value = (Array.isArray(this.activeItem) ? undefined : this.activeItem) as QuickPickItem | undefined;
+
+		return (Optional.ofNullable(value?.label).orElseNonNullable('')).replace(Constant.LABEL_STRING_MATCH, '');
+	}
+
+	protected get getInputValueLabelString(): string {
+		return typeof(this.inputValue) === 'string' ? this.inputValue.replace(Constant.LABEL_STRING_MATCH, '') : '';
+	}
+
+	protected getItemByLabelString(items: Array<QuickPickItem>, label: string): QuickPickItem | undefined {
+		return items.find((item) => { return item.label.replace(Constant.LABEL_STRING_MATCH, '') === label; });
+	}
+
+	protected createBaseState(additionalTitle: string, guideGroupId: string, totalStep?: number, itemId?: string): Partial<State> {
+		const state = { title: this.title + additionalTitle, guideGroupId: guideGroupId, step: 0, totalSteps: totalStep } as Partial<State>;
+
+		if (totalStep) {
+			state.totalSteps = totalStep;
+		}
+
+		if (itemId) {
+			state.itemId = itemId;
+		}
+
+		return state;
+	}
+
+	protected setInputValueLabelString4GuideGroupResultSet(): void {
+		this.guideGroupResultSet[this.itemId] = this.getInputValueLabelString;
+	}
+}
+
+export abstract class AbstractQuickPickSelectGuide extends AbstractQuickPickGuide {
+	public async after(): Promise<void> {
+		if (!Array.isArray(this.activeItem)) {
+			const callback = this.getExecute((this.activeItem as QuickPickItem)?.label);
+
+			if (callback) {
+				await callback();
+			}
+		}
+	}
+
+	protected abstract getExecute(label: string | undefined): (() => Promise<void>) | undefined;
+}
+
+export class BaseQuickPickGuide extends AbstractQuickPickGuide {
+	public async after(): Promise<void> {
+		return this.inputStepAfter();
+	}
+}

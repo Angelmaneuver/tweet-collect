@@ -1,0 +1,146 @@
+{
+	"name": "tweet-collect",
+	"displayName": "tweet-collect",
+	"description": "Search and collect tweets from Twitter.",
+	"publisher": "Angelmaneuver",
+	"version": "0.0.1",
+	"homepage": "https://github.com/Angelmaneuver/tweet-collect/blob/main/README.md#tweet-collect",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Angelmaneuver/tweet-collect.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Angelmaneuver/tweet-collect/issues"
+	},
+	"engines": {
+		"vscode": "^1.69.0"
+	},
+	"icon": "resource/AppIcon.png",
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"Twitter"
+	],
+	"activationEvents": [
+		"onCommand:tweet-collect.guidance"
+	],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "tweet-collect.guidance",
+				"title": "Tweet Collect"
+			}
+		],
+		"configuration": {
+			"title": "Tweet Collect",
+			"properties": {
+				"tweet-collect.bearerToken": {
+					"type": "string",
+					"default": "",
+					"description": "Bearer Token issued by Twitter Developers site. * Be sure to set settingsSync.ignoredSettings."
+				},
+				"tweet-collect.expansions": {
+					"type": "array",
+					"default": [
+						"author_id",
+						"attachments.media_keys"
+					],
+					"description": "Expansions enable you to request additional data objects that relate to the originally returned Tweets."
+				},
+				"tweet-collect.maxResults": {
+					"type": "number",
+					"maximum": 100,
+					"minimum": 10,
+					"default": 10,
+					"description": "The maximum number of search results to be returned by a request."
+				},
+				"tweet-collect.tweetFields": {
+					"type": "array",
+					"default": [
+						"author_id",
+						"attachments",
+						"created_at"
+					],
+					"description": "This parameter enables you want to select which specific tweet fields will deliver in each returned Tweet Object."
+				},
+				"tweet-collect.mediaFields": {
+					"type": "array",
+					"default": [
+						"url",
+						"alt_text"
+					],
+					"description": "This parameter enables you want to select which specific media fields will deliver in each returned Tweet Object."
+				},
+				"tweet-collect.dataLayout": {
+					"type": "array",
+					"default": [
+						"created_at",
+						"user.name",
+						"user.username",
+						"text",
+						"media.url",
+						"media.alt_text"
+					],
+					"description": "This parameter enables you want to select which specific Tweet fields will deliver in each returned Tweet Object."
+				},
+				"tweet-collect.enclosure": {
+					"type": "string",
+					"default": "\"",
+					"description": "The default enclose character."
+				},
+				"tweet-collect.separator": {
+					"type": "string",
+					"default": ",",
+					"description": "The default separate character."
+				},
+				"tweet-collect.eol": {
+					"type": "string",
+					"default": "auto",
+					"enum": [
+						"auto",
+						"\r\n",
+						"\n"
+					],
+					"description": "The default end of line character."
+				},
+				"tweet-collect.newLine2space": {
+					"type": "boolean",
+					"default": true,
+					"description": "Convert new line codes to space."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "yarn run package",
+		"compile": "webpack",
+		"watch": "webpack --watch",
+		"package": "webpack --mode production --devtool hidden-source-map",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"dependencies": {
+		"twitter-api-v2": "^1.12.3"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.2.0",
+		"@types/mocha": "^9.1.1",
+		"@types/node": "16.x",
+		"@types/vscode": "^1.69.0",
+		"@typescript-eslint/eslint-plugin": "^5.30.0",
+		"@typescript-eslint/parser": "^5.30.0",
+		"@vscode/test-electron": "^2.1.5",
+		"eslint": "^8.18.0",
+		"glob": "^8.0.3",
+		"mocha": "^10.0.0",
+		"ts-loader": "^9.3.1",
+		"typescript": "^4.7.4",
+		"webpack": "^5.73.0",
+		"webpack-cli": "^4.10.0"
+	}
+}
